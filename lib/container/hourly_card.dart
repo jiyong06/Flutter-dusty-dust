@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dusty_dust/utils/data_utils.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../model/stat_model.dart';
-import 'card_title.dart';
-import 'main_card.dart';
+import '../component/card_title.dart';
+import '../component/main_card.dart';
 
 class HourlyCard extends StatelessWidget {
   final Color darkColor;
   final Color lightColor;
-  final String category;
-  final List<StatModel> stats;
   final String region;
+  final ItemCode itemCode;
 
   const HourlyCard({
     super.key,
     required this.darkColor,
     required this.lightColor,
-    required this.category,
-    required this.stats,
     required this.region,
+    required this.itemCode,
   });
 
   @override
@@ -29,17 +28,22 @@ class HourlyCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           CardTitle(
+            title: '시간별 ${DataUtils.getItemCodeKrString(itemCode: itemCode)}',
             backgroundColor: darkColor,
-            title: '시간별 ${category}',
           ),
-          Column(
-            children: stats
-                .map(
-                  (stat) => renderRow(
-                    stat: stat,
-                  ),
-                )
-                .toList(),
+          ValueListenableBuilder<Box>(
+            valueListenable: Hive.box<StatModel>(itemCode.name).listenable(),
+            builder: (context, box, widget) => Column(
+              children: box.values
+                  .toList()
+                  .reversed
+                  .map(
+                    (stat) => renderRow(
+                      stat: stat,
+                    ),
+                  )
+                  .toList(),
+            ),
           ),
         ],
       ),
@@ -52,7 +56,10 @@ class HourlyCard extends StatelessWidget {
       itemCode: stat.itemCode,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8.0,
+        vertical: 4.0,
+      ),
       child: Row(
         children: [
           Expanded(
